@@ -3,13 +3,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Message {
-    Identify { username: String },
+    Identify {
+        username: String,
+    },
     Response {
         operation: Operation,
         result: ResponseResult,
         extra: String,
     },
-    NewUser { username: String },
+    NewUser {
+        username: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

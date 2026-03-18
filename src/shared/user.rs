@@ -4,7 +4,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn new( username: String, status: String ) -> Self {
+    pub fn new(username: String, status: String) -> Self {
         Self { username, status }
     }
 }

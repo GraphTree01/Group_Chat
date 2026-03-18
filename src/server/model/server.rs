@@ -1,16 +1,12 @@
 use std::collections::HashMap;
-use std::{
-    io::{BufReader, prelude::*},
-    net::{TcpListener, TcpStream},
-};
+use std::net::{TcpListener, TcpStream};
 
 use crate::shared::user::User;
 
 pub struct Server {
-
     ip: String,
     port: String,
-    users: HashMap<String, User>, 
+    users: HashMap<String, User>,
 }
 
 impl Server {
@@ -40,7 +36,7 @@ impl Server {
         Ok(())
     }
 
-    fn handle_client(&mut self, stream: TcpStream) -> std::io::Result<()> {
+    fn handle_client(&mut self, _stream: TcpStream) -> std::io::Result<()> {
         Ok(())
     }
 
@@ -48,4 +44,3 @@ impl Server {
         self.users.insert(user.username.clone(), user);
     }
 }
-
