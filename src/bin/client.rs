@@ -1,3 +1,3 @@
 fn main() {
-    // TODO: implementar cliente
+    println!("Aquí debería ir la función que dirije el flujo del cliente");
 }
