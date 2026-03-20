@@ -1,46 +1,60 @@
 use std::collections::HashMap;
-use std::net::{TcpListener, TcpStream};
+use std::sync::{Arc, Mutex};
 
+use crate::shared::protocol::{Message, UserStatus};
 use crate::shared::user::User;
 
+pub enum IdentifyResult {
+    Success { response: Message, new_user: Message },
+    UserAlreadyExists { response: Message },
+}
+
 pub struct Server {
-    ip: String,
-    port: String,
-    users: HashMap<String, User>,
+    users: Arc<Mutex<HashMap<String, User>>>,
 }
 
 impl Server {
-    pub fn new(ip: String, port: String) -> Self {
+    pub fn new() -> Self {
         Self {
-            ip,
-            port,
-            users: HashMap::new(),
+            users: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
-    pub fn address(&self) -> String {
-        format!("{}:{}", self.ip, self.port)
-    }
+    pub fn identify(&self, username: String) -> std::io::Result<IdentifyResult> {
+        let mut guard = self
+            .users
+            .lock()
+            .map_err(|_| std::io::Error::other("user registry lock poisoned"))?;
 
-    pub fn start(&mut self) -> std::io::Result<()> {
-        let listener = TcpListener::bind(self.address())?;
-        println!("Servidor en {}", self.address());
-
-        for stream in listener.incoming() {
-            match stream {
-                Ok(stream) => self.handle_client(stream)?,
-                Err(err) => eprint!("Error aceptando conexión: {err}"),
-            }
+        if guard.contains_key(&username) {
+            return Ok(IdentifyResult::UserAlreadyExists {
+                response: Message::identify_user_already_exists(username),
+            });
         }
 
+        guard.insert(
+            username.clone(),
+            User::new(username.clone(), UserStatus::Active),
+        );
+
+        Ok(IdentifyResult::Success {
+            response: Message::identify_success(username.clone()),
+            new_user: Message::new_user(username),
+        })
+    }
+
+    pub fn disconnect(&self, username: &str) -> std::io::Result<()> {
+        let mut guard = self
+            .users
+            .lock()
+            .map_err(|_| std::io::Error::other("user registry lock poisoned"))?;
+        guard.remove(username);
         Ok(())
     }
 
-    fn handle_client(&mut self, _stream: TcpStream) -> std::io::Result<()> {
-        Ok(())
-    }
-
-    pub fn add_user(&mut self, user: User) {
-        self.users.insert(user.username.clone(), user);
+    pub fn add_user(&self, user: User) {
+        if let Ok(mut guard) = self.users.lock() {
+            guard.insert(user.username.clone(), user);
+        }
     }
 }
